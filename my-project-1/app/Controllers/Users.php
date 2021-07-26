@@ -14,6 +14,7 @@ class Users extends Controller{
 
 	public function __construct(){
 		helper('form');
+		helper('date');
 		$this->contactModel = new ContactModel();
 		$this->registerModel = new RegisterModel();
 		$this->email = \Config\Services::email();
@@ -91,10 +92,61 @@ class Users extends Controller{
 		echo view('register-form', $data);
 	}
 
+	public function activate($uni_id=null){
+
+
+		$data=[];
+
+		if(!empty($uni_id)){
+			$user_data = $this->registerModel->verify_uni_id($uni_id);
+			if ($user_data) {
+			
+			function verifyExpTime($reg_time){
+				$curTime = now();
+				$regTime = strtotime($reg_time);
+				$diffTime = (int)$curTime-(int)$regTime;
+
+				if(3600 < $diffTime){
+					return true;
+				}else{
+					return false;
+				}
+			}
+
+				if (verifyExpTime($user_data->activation_date)) {
+
+					if($user_data->status == 'inactive'){
+						$status= $this->registerModel->updateStatus($uni_id);
+						if ($status) {
+							$data['success'] = "Account activated successfully...";
+						}else{
+							$data['error'] = "...";
+						}
+					}else{
+						$data['success'] = "Activation link was already active...";
+					}
+					
+				}else{
+					$data['error'] = "Activation link was expired...";
+				}
+				
+			}else{
+				$data['error'] = "Sorry... We are unable to find your account...";
+			}
+		}else{
+			$data['error'] = "Unable to proccess your request...";
+		}
+
+		echo view('activate_view', $data);
+	}
+
+	
+
 	public function login()
 	{
 		echo view('login-form');
 	}
+
 
 
 
